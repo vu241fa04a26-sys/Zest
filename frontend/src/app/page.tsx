@@ -20,6 +20,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { API_BASE_URL } from '@/config';
 
 const categoryMeta: Record<string, { icon: string; desc: string; image: string }> = {
   "Breakfast": { icon: "🥞", desc: "Crispy warm dosas and steamed soft fluffy idlis.", image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=300&auto=format&fit=crop&q=80" },
@@ -56,7 +57,7 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const resCats = await fetch('http://localhost:8000/api/menu/categories');
+        const resCats = await fetch(`${API_BASE_URL}/api/menu/categories`);
         if (resCats.ok) {
           const dataCats = await resCats.json();
           if (dataCats.length > 0) setCategoriesList(dataCats);
@@ -66,7 +67,7 @@ export default function LandingPage() {
       }
 
       try {
-        const resTitle = await fetch('http://localhost:8000/api/menu/settings/specialties_title');
+        const resTitle = await fetch(`${API_BASE_URL}/api/menu/settings/specialties_title`);
         if (resTitle.ok) {
           const dataTitle = await resTitle.json();
           if (dataTitle.value) setSpecialtiesTitle(dataTitle.value);
@@ -76,7 +77,7 @@ export default function LandingPage() {
       }
 
       try {
-        const resSpecialties = await fetch('http://localhost:8000/api/menu/specialties');
+        const resSpecialties = await fetch(`${API_BASE_URL}/api/menu/specialties`);
         if (resSpecialties.ok) {
           const dataSpecs = await resSpecialties.json();
           if (dataSpecs.length > 0) {
@@ -111,7 +112,7 @@ export default function LandingPage() {
     setLoginError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

@@ -19,6 +19,7 @@ import {
   Search
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { API_BASE_URL } from '@/config';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface MenuItem {
@@ -154,11 +155,11 @@ export default function AdminDashboard() {
       const headers = { 'Authorization': `Bearer ${token}` };
       
       // 1. Fetch Analytics
-      const resAnal = await fetch('http://localhost:8000/api/admin/analytics', { headers });
+      const resAnal = await fetch(`${API_BASE_URL}/api/admin/analytics`, { headers });
       if (resAnal.ok) setAnalytics(await resAnal.json());
 
       // 2. Fetch Orders
-      const resOrders = await fetch('http://localhost:8000/api/admin/orders', { headers });
+      const resOrders = await fetch(`${API_BASE_URL}/api/admin/orders`, { headers });
       if (resOrders.ok) {
         const ordersData = await resOrders.json();
         const mappedOrders = ordersData.map((o: any) => ({
@@ -179,17 +180,17 @@ export default function AdminDashboard() {
       }
 
       // 3. Fetch Categories, Menu Items & System Settings
-      const resCats = await fetch('http://localhost:8000/api/menu/categories');
+      const resCats = await fetch(`${API_BASE_URL}/api/menu/categories`);
       if (resCats.ok) setCategories(await resCats.json());
 
-      const resItems = await fetch('http://localhost:8000/api/menu/items');
+      const resItems = await fetch(`${API_BASE_URL}/api/menu/items`);
       if (resItems.ok) {
         const items = await resItems.json();
         setMenuItems(items);
         setSelectedSpecialtyIds(items.filter((item: MenuItem) => item.is_specialty).map((item: MenuItem) => item.id));
       }
 
-      const resTitle = await fetch('http://localhost:8000/api/menu/settings/specialties_title');
+      const resTitle = await fetch(`${API_BASE_URL}/api/menu/settings/specialties_title`);
       if (resTitle.ok) {
         const dataTitle = await resTitle.json();
         setSpecialtiesTitleInput(dataTitle.value || 'Menu Specialties');
@@ -216,7 +217,7 @@ export default function AdminDashboard() {
     }
     const fetchMenuSuggestions = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/menu/items?search=${encodeURIComponent(menuSearch)}`);
+        const res = await fetch(`${API_BASE_URL}/api/menu/items?search=${encodeURIComponent(menuSearch)}`);
         if (res.ok) {
           const data = await res.json();
           setMenuSuggestions(data.slice(0, 5));
@@ -268,7 +269,7 @@ export default function AdminDashboard() {
   const handleUpdateStatus = async (orderId: number, nextStatus: string) => {
     if (!token) return;
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +281,7 @@ export default function AdminDashboard() {
         setOrders((prev) =>
           prev.map((o) => (o.id === orderId ? { ...o, order_status: nextStatus } : o))
         );
-        const resAnal = await fetch('http://localhost:8000/api/admin/analytics', {
+        const resAnal = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resAnal.ok) setAnalytics(await resAnal.json());
@@ -296,7 +297,7 @@ export default function AdminDashboard() {
     if (!cancellingOrderId || !token) return;
     setIsCancellingOrderLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/orders/${cancellingOrderId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/orders/${cancellingOrderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +315,7 @@ export default function AdminDashboard() {
         setCancellingOrderId(null);
         setCancelReasonInput('');
         
-        const resAnal = await fetch('http://localhost:8000/api/admin/analytics', {
+        const resAnal = await fetch(`${API_BASE_URL}/api/admin/analytics`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (resAnal.ok) setAnalytics(await resAnal.json());
@@ -331,7 +332,7 @@ export default function AdminDashboard() {
     if (!token) return;
     setTitleSaving(true);
     try {
-      const response = await fetch('http://localhost:8000/api/admin/settings/specialties_title', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/settings/specialties_title`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -352,7 +353,7 @@ export default function AdminDashboard() {
   const handleToggleSpecialty = async (itemId: number, isSpecialty: boolean) => {
     if (!token) return;
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/menu-items/${itemId}/specialty`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/menu-items/${itemId}/specialty`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -393,7 +394,7 @@ export default function AdminDashboard() {
     setTitleSaving(true);
     try {
       const [resTitle, resBulk] = await Promise.all([
-        fetch('http://localhost:8000/api/admin/settings/specialties_title', {
+        fetch(`${API_BASE_URL}/api/admin/settings/specialties_title`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -401,7 +402,7 @@ export default function AdminDashboard() {
           },
           body: JSON.stringify({ value: specialtiesTitleInput })
         }),
-        fetch('http://localhost:8000/api/admin/menu-items/specialties/bulk', {
+        fetch(`${API_BASE_URL}/api/admin/menu-items/specialties/bulk`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -476,7 +477,7 @@ export default function AdminDashboard() {
     try {
       let response;
       if (editingItem) {
-        response = await fetch(`http://localhost:8000/api/admin/menu-items/${editingItem.id}`, {
+        response = await fetch(`${API_BASE_URL}/api/admin/menu-items/${editingItem.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -485,7 +486,7 @@ export default function AdminDashboard() {
           body: JSON.stringify(payload)
         });
       } else {
-        response = await fetch('http://localhost:8000/api/admin/menu-items', {
+        response = await fetch(`${API_BASE_URL}/api/admin/menu-items`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -497,7 +498,7 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         setShowItemModal(false);
-        const resItems = await fetch('http://localhost:8000/api/menu/items');
+        const resItems = await fetch(`${API_BASE_URL}/api/menu/items`);
         if (resItems.ok) setMenuItems(await resItems.json());
       }
     } catch (e) {
@@ -510,7 +511,7 @@ export default function AdminDashboard() {
   const handleDeleteItem = async (id: number) => {
     if (!token || !confirm('Are you sure you want to delete this menu item?')) return;
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/menu-items/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/menu-items/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

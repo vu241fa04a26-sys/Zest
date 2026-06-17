@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, KeyRound, Lock, Phone, ShieldCheck } from 'lucide-react';
+import { API_BASE_URL } from '@/config';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function ForgotPasswordPage() {
     setMessage(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/forgot-password/request', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email_or_phone: emailOrPhone }),
@@ -52,7 +53,7 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/forgot-password/verify', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email_or_phone: emailOrPhone, otp, new_password: newPassword }),

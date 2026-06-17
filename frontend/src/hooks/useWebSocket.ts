@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { WS_BASE_URL } from '@/config';
 
 interface WebSocketHookProps {
   clientId: string | null | number;
@@ -23,8 +24,8 @@ export const useWebSocket = ({ clientId, onMessage }: WebSocketHookProps) => {
       socketRef.current.close();
     }
 
-    // Connect to WebSocket server running on port 8000
-    const wsUrl = `ws://localhost:8000/ws/${clientId}`;
+    // Connect to WebSocket server
+    const wsUrl = `${WS_BASE_URL}/ws/${clientId}`;
     console.log(`[WebSocket] Connecting to: ${wsUrl}`);
     
     const socket = new WebSocket(wsUrl);

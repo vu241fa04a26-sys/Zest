@@ -16,6 +16,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { API_BASE_URL } from '@/config';
 
 interface Category {
   id: number;
@@ -86,7 +87,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/menu/categories');
+        const res = await fetch(`${API_BASE_URL}/api/menu/categories`);
         if (res.ok) {
           const data = await res.json();
           setCategories(data);
@@ -102,7 +103,7 @@ export default function DashboardPage() {
   const fetchLatestOrders = useCallback(async () => {
     if (!isAuthenticated || !token) return;
     try {
-      const res = await fetch('http://localhost:8000/api/orders/', {
+      const res = await fetch(`${API_BASE_URL}/api/orders/`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -147,7 +148,7 @@ export default function DashboardPage() {
     }
     const fetchSuggestions = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/menu/items?search=${encodeURIComponent(search)}`);
+        const res = await fetch(`${API_BASE_URL}/api/menu/items?search=${encodeURIComponent(search)}`);
         if (res.ok) {
           const data = await res.json();
           setSearchSuggestions(data.slice(0, 5));
@@ -171,7 +172,7 @@ export default function DashboardPage() {
       if (search) params.append('search', search);
       if (sortBy) params.append('sort_by', sortBy);
 
-      const res = await fetch(`http://localhost:8000/api/menu/items?${params.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/api/menu/items?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setItems(data);

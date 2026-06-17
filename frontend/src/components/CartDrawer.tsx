@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCartStore } from '@/store/useCartStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { API_BASE_URL } from '@/config';
 
 export default function CartDrawer() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function CartDrawer() {
     };
 
     try {
-      const response = await fetch('http://localhost:8000/api/orders/', {
+      const response = await fetch(`${API_BASE_URL}/api/orders/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

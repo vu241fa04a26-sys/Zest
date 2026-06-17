@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClipboardList, Clock, HelpCircle, RefreshCw, Star, X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { API_BASE_URL } from '@/config';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface MenuItem {
@@ -68,7 +69,7 @@ export default function OrderTrackingPage() {
     if (!ratingModalId || !token) return;
     setFeedbackSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/orders/${ratingModalId}/complete`, {
+      const response = await fetch(`${API_BASE_URL}/api/orders/${ratingModalId}/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +110,7 @@ export default function OrderTrackingPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/api/orders/', {
+      const response = await fetch(`${API_BASE_URL}/api/orders/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

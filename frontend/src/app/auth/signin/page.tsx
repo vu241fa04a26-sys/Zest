@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Lock, Mail, ArrowRight, Eye, EyeOff, UtensilsCrossed } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { API_BASE_URL } from '@/config';
 
 function SignInForm() {
   const router = useRouter();
@@ -39,7 +40,7 @@ function SignInForm() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Lock, ArrowRight, Eye, EyeOff, UtensilsCrossed } from 'lucide-react';
+import { API_BASE_URL } from '@/config';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

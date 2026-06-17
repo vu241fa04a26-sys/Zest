@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -15,10 +16,29 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Allow requests from any origin for ease of development and deployment proxy routing
+# Parse allowed origins for CORS compatibility with credentials
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    origins.append(frontend_url.rstrip("/"))
+
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_env:
+    for origin in allowed_origins_env.split(","):
+        stripped = origin.strip().rstrip("/")
+        if stripped:
+            origins.append(stripped)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Support all Vercel deployments (production & previews)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +49,11 @@ app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(menu.router, prefix=settings.API_V1_STR)
 app.include_router(orders.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
+
+# Expose OpenAPI schema at the root /openapi.json for compatibility with deployment checkers
+@app.get("/openapi.json", include_in_schema=False)
+def get_openapi_endpoint():
+    return app.openapi()
 
 @app.get("/")
 def read_root():
