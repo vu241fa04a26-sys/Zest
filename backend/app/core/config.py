@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     
     # Defaults to SQLite locally for convenience, overridden by environment variable for Docker/Production
     DATABASE_URL: str = "sqlite:///./zest.db"
+    SMTP_USER: str = "zestmhp@gmail.com"
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_PASSWORD: Optional[str] = None
     
     class Config:
         env_file = ".env"

@@ -112,3 +112,58 @@ def get_order_details(
         raise HTTPException(status_code=403, detail="Not authorized to view this order")
         
     return order
+
+@router.post("/{order_id}/complete", response_model=schemas.OrderOut)
+async def complete_order(
+    order_id: int,
+    rating_in: schemas.OrderComplete,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    # Verify ownership
+    if order.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to complete this order")
+        
+    # Verify status
+    if order.order_status != "Ready":
+        raise HTTPException(status_code=400, detail="Only orders ready for collection can be marked received")
+        
+    order.order_status = "Completed"
+    if rating_in.rating is not None:
+        order.rating = max(1, min(5, rating_in.rating))
+        
+    db.commit()
+    db.refresh(order)
+    
+    # Broadcast status change via websockets
+    # 1. Inform customer session
+    await manager.send_personal_message(
+        {
+            "event": "order_update",
+            "data": {
+                "order_id": order.id,
+                "status": order.order_status,
+                "rating": order.rating
+            }
+        },
+        client_id=str(order.user_id)
+    )
+    # 2. Inform admin session
+    await manager.send_personal_message(
+        {
+            "event": "admin_order_update",
+            "data": {
+                "order_id": order.id,
+                "status": order.order_status,
+                "rating": order.rating
+            }
+        },
+        client_id="admin"
+    )
+    
+    return order
+

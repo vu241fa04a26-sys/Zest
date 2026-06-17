@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ClipboardList, Clock, HelpCircle, RefreshCw } from 'lucide-react';
+import { ClipboardList, Clock, HelpCircle, RefreshCw, Star, X } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
@@ -24,6 +24,7 @@ interface Order {
   total_amount: number;
   created_at: string;
   items: OrderItem[];
+  cancel_reason?: string;
 }
 
 const statusStages = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Completed'];
@@ -44,6 +45,52 @@ export default function OrderTrackingPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Customer receipt confirmation and rating states
+  const [receiveConfirmId, setReceiveConfirmId] = useState<number | null>(null);
+  const [ratingModalId, setRatingModalId] = useState<number | null>(null);
+  const [ratingVal, setRatingVal] = useState<number>(5);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+
+  const handleOpenReceiveModal = (orderId: number) => {
+    setReceiveConfirmId(orderId);
+  };
+
+  const handleConfirmReceived = () => {
+    if (!receiveConfirmId) return;
+    const targetId = receiveConfirmId;
+    setReceiveConfirmId(null);
+    setRatingModalId(targetId);
+    setRatingVal(5); // default
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!ratingModalId || !token) return;
+    setFeedbackSubmitting(true);
+    try {
+      const response = await fetch(`http://localhost:8000/api/orders/${ratingModalId}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rating: ratingVal })
+      });
+      if (response.ok) {
+        // Update local order status
+        setOrders(prev => prev.map(o => o.id === ratingModalId ? { ...o, order_status: 'Completed' } : o));
+        setRatingModalId(null);
+      } else {
+        const data = await response.json();
+        alert(data.detail || 'Failed to complete order.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error updating order.');
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
 
   // Re-route unauthorized traffic
   useEffect(() => {
@@ -91,7 +138,9 @@ export default function OrderTrackingPage() {
       console.log(`[WebSocket Update] Order ${data.order_id} status updated to: ${data.status}`);
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === data.order_id ? { ...order, order_status: data.status } : order
+          order.id === data.order_id 
+            ? { ...order, order_status: data.status, cancel_reason: data.cancel_reason } 
+            : order
         )
       );
     }
@@ -207,6 +256,17 @@ export default function OrderTrackingPage() {
                   </div>
                 </div>
 
+                {/* Cancellation Reason Alert */}
+                {order.order_status === 'Rejected' && order.cancel_reason && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs sm:text-sm rounded-2xl flex items-center space-x-2.5">
+                    <span className="text-lg animate-bounce">⚠️</span>
+                    <div>
+                      <span className="font-extrabold block">Cancellation Reason:</span>
+                      <span className="text-white font-medium">{order.cancel_reason}</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Progress bar */}
                 {!isCompletedOrRejected && (
                   <div className="space-y-3.5">
@@ -257,11 +317,114 @@ export default function OrderTrackingPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Receive Order Button (for user confirmation at status "Ready") */}
+                {order.order_status === 'Ready' && (
+                  <div className="pt-4 border-t border-card-border/30">
+                    <button
+                      onClick={() => handleOpenReceiveModal(order.id)}
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/10 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                    >
+                      <span>Receive Order 🍽️</span>
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
+
+      {/* 1. CONFIRMATION DIALOG MODAL */}
+      {receiveConfirmId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setReceiveConfirmId(null)} />
+          <div className="relative z-10 w-full max-w-sm bg-zinc-900 border border-card-border rounded-3xl p-6 shadow-2xl space-y-5 animate-fade-in">
+            <div className="text-center space-y-3">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/10 text-emerald-500 border border-emerald-600/20 shadow-lg shadow-emerald-600/5">
+                🍔
+              </div>
+              <h3 className="text-lg font-black text-white">Receive Order #{receiveConfirmId}?</h3>
+              <p className="text-xs text-zinc-400">Please confirm that you have collected your food item from the canteen counter.</p>
+            </div>
+            <div className="flex space-x-3 pt-2">
+              <button
+                onClick={() => setReceiveConfirmId(null)}
+                className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-xl text-xs transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={handleConfirmReceived}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-emerald-600/15"
+              >
+                Confirm Received
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. FEEDBACK / STAR RATING MODAL */}
+      {ratingModalId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setRatingModalId(null)} />
+          <div className="relative z-10 w-full max-w-sm bg-zinc-900 border border-card-border rounded-3xl p-6 shadow-2xl space-y-5 animate-fade-in">
+            <div className="text-center space-y-3">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-orange/10 text-brand-orange border border-brand-orange/20 shadow-lg shadow-brand-orange/5">
+                ★
+              </div>
+              <h3 className="text-lg font-black text-white">Rate your Food Experience</h3>
+              <p className="text-xs text-zinc-400">Help us improve the menu! Please rate your meal out of 5 stars.</p>
+            </div>
+
+            {/* Star Rating Select controls */}
+            <div className="flex items-center justify-center space-x-3 py-2">
+              {[1, 2, 3, 4, 5].map((starVal) => {
+                const isSelected = starVal <= ratingVal;
+                return (
+                  <button
+                    key={starVal}
+                    type="button"
+                    onClick={() => setRatingVal(starVal)}
+                    className="p-1 text-brand-yellow hover:scale-110 transition-transform"
+                    title={`Rate {starVal} stars`}
+                  >
+                    <Star
+                      size={28}
+                      fill={isSelected ? '#eab308' : 'none'}
+                      stroke="#eab308"
+                      className="text-brand-orange"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex space-x-3 pt-2">
+              <button
+                onClick={() => setRatingModalId(null)}
+                className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-xl text-xs transition-all"
+                disabled={feedbackSubmitting}
+              >
+                Skip Feedback
+              </button>
+              <button
+                onClick={handleFeedbackSubmit}
+                disabled={feedbackSubmitting}
+                className="flex-1 py-2.5 bg-brand-orange hover:bg-brand-orange-hover text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-brand-orange/15 flex items-center justify-center space-x-1"
+              >
+                {feedbackSubmitting ? (
+                  <span className="border-2 border-white border-t-transparent animate-spin rounded-full h-4 w-4" />
+                ) : (
+                  <span>Submit Rating</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

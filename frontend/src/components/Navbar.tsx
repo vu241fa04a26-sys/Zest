@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, Menu, X, Sun, Moon, LogOut, LayoutDashboard, ClipboardList } from 'lucide-react';
+import { ShoppingCart, Menu, X, Sun, Moon, LogOut, LayoutDashboard, ClipboardList, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useUIStore } from '@/store/useUIStore';
@@ -84,8 +84,18 @@ export default function Navbar() {
     <nav className="sticky top-0 z-40 w-full transition-all duration-300 border-b border-card-border bg-nav-bg backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+          {/* Logo & Back button */}
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {pathname !== '/' && (
+              <button
+                onClick={() => router.back()}
+                className="mr-2 p-2 rounded-xl hover:bg-foreground/5 transition-all text-foreground/80 flex items-center gap-1.5 text-xs font-bold border border-card-border"
+                aria-label="Go Back"
+              >
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </button>
+            )}
             <Link href="/" className="flex items-center">
               <ZestLogo />
             </Link>
@@ -168,20 +178,22 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-3 pl-2 border-l border-card-border">
-                <Link
-                  href="/auth/signin"
-                  className="px-4 py-2 text-sm font-semibold text-foreground hover:text-brand-orange transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="px-4 py-2 text-sm font-semibold bg-brand-orange text-white rounded-xl shadow-lg hover:bg-brand-orange-hover hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  Sign Up
-                </Link>
-              </div>
+              pathname !== '/' && (
+                <div className="flex items-center space-x-3 pl-2 border-l border-card-border">
+                  <Link
+                    href="/auth/signin"
+                    className="px-4 py-2 text-sm font-semibold text-foreground hover:text-brand-orange transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="px-4 py-2 text-sm font-semibold bg-brand-orange text-white rounded-xl shadow-lg hover:bg-brand-orange-hover hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )
             )}
           </div>
 
@@ -281,22 +293,24 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <div className="flex flex-col space-y-2">
-                <Link
-                  href="/auth/signin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 text-sm font-semibold text-foreground border border-card-border rounded-xl hover:bg-foreground/5 transition-all"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 text-sm font-semibold bg-brand-orange text-white rounded-xl hover:bg-brand-orange-hover shadow-md transition-all"
-                >
-                  Sign Up
-                </Link>
-              </div>
+              pathname !== '/' && (
+                <div className="flex flex-col space-y-2">
+                  <Link
+                    href="/auth/signin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center py-2.5 text-sm font-semibold text-foreground border border-card-border rounded-xl hover:bg-foreground/5 transition-all"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center py-2.5 text-sm font-semibold bg-brand-orange text-white rounded-xl hover:bg-brand-orange-hover shadow-md transition-all"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )
             )}
           </div>
         </div>

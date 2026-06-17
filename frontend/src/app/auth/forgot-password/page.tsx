@@ -8,7 +8,7 @@ import { ArrowLeft, ArrowRight, KeyRound, Lock, Phone, ShieldCheck } from 'lucid
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState('');
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [step, setStep] = useState<'phone' | 'verify'>('phone');
@@ -26,11 +26,11 @@ export default function ForgotPasswordPage() {
       const response = await fetch('http://localhost:8000/api/auth/forgot-password/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ email_or_phone: emailOrPhone }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Could not send OTP.');
-      setMessage('OTP sent. For this demo, check the backend terminal output.');
+      setMessage('OTP sent successfully! Please check your registered email address.');
       setStep('verify');
     } catch (err: any) {
       setError(err.message || 'Could not send OTP.');
@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
       const response = await fetch('http://localhost:8000/api/auth/forgot-password/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp, new_password: newPassword }),
+        body: JSON.stringify({ email_or_phone: emailOrPhone, otp, new_password: newPassword }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Could not update password.');
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-zinc-950">
+    <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-zinc-950 min-h-screen">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-brand-orange/10 rounded-full blur-[100px] pointer-events-none" />
 
       <motion.div
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
           </div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Reset password</h2>
           <p className="text-sm text-zinc-400">
-            Verify your registered phone number with OTP to update your password.
+            Verify your registered email or phone number with OTP to update your password.
           </p>
         </div>
 
@@ -105,10 +105,10 @@ export default function ForgotPasswordPage() {
             <form onSubmit={requestOtp} className="space-y-6">
               <div className="relative group">
                 <input
-                  type="tel"
+                  type="text"
                   required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={emailOrPhone}
+                  onChange={(e) => setEmailOrPhone(e.target.value)}
                   placeholder=" "
                   className="peer w-full bg-zinc-950 border border-card-border focus:border-brand-orange rounded-xl px-11 py-3.5 text-sm text-white focus:outline-none transition-all placeholder-transparent"
                 />
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
                   <Phone size={16} />
                 </span>
                 <label className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-zinc-500 pointer-events-none transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs peer-focus:text-brand-orange peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs">
-                  Registered Phone Number
+                  Registered Email or Phone Number
                 </label>
               </div>
 

@@ -11,7 +11,7 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
   removeFromCart: (itemId: number) => void;
   updateQuantity: (itemId: number, quantity: number) => void;
   clearCart: () => void;
@@ -22,16 +22,16 @@ interface CartState {
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
-  addToCart: (item) => {
+  addToCart: (item, quantity = 1) => {
     const currentItems = get().items;
     const existingItem = currentItems.find((i) => i.id === item.id);
     let newItems;
     if (existingItem) {
       newItems = currentItems.map((i) =>
-        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
       );
     } else {
-      newItems = [...currentItems, { ...item, quantity: 1 }];
+      newItems = [...currentItems, { ...item, quantity }];
     }
     if (typeof window !== 'undefined') {
       localStorage.setItem('zest_cart', JSON.stringify(newItems));

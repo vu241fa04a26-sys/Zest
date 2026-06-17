@@ -85,3 +85,21 @@ def get_menu_item(item_id: int, db: Session = Depends(get_db)):
     if not item:
         raise HTTPException(status_code=404, detail="Menu item not found")
     return item
+
+@router.get("/specialties", response_model=List[schemas.MenuItemOut])
+def get_specialties(db: Session = Depends(get_db)):
+    return db.query(models.MenuItem).filter(models.MenuItem.is_specialty == True).all()
+
+@router.get("/settings/{key}", response_model=schemas.SystemSettingOut)
+def get_setting(key: str, db: Session = Depends(get_db)):
+    setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == key).first()
+    if not setting:
+        if key == "specialties_title":
+            # Seed default specialties title dynamically if not found
+            setting = models.SystemSetting(key=key, value="Menu Specialties")
+            db.add(setting)
+            db.commit()
+            db.refresh(setting)
+        else:
+            raise HTTPException(status_code=404, detail="Setting not found")
+    return setting

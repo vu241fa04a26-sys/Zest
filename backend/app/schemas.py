@@ -25,7 +25,7 @@ class UserCreate(UserBase):
     password: str
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class UserOut(UserBase):
@@ -59,6 +59,7 @@ class MenuItemBase(BaseModel):
     is_veg: bool = True
     is_available: bool = True
     availability_status: str = "In Stock"  # "In Stock", "Out Of Stock", "Limited Stock"
+    is_specialty: bool = False
 
 class MenuItemCreate(MenuItemBase):
     category_id: int
@@ -71,6 +72,7 @@ class MenuItemUpdate(BaseModel):
     is_veg: Optional[bool] = None
     is_available: Optional[bool] = None
     availability_status: Optional[str] = None
+    is_specialty: Optional[bool] = None
     category_id: Optional[int] = None
 
 class MenuItemOut(MenuItemBase):
@@ -106,6 +108,7 @@ class OrderCreate(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: str  # "Pending", "Accepted", "Preparing", "Ready", "Completed", "Rejected"
+    cancel_reason: Optional[str] = None
 
 class OrderOut(BaseModel):
     id: int
@@ -115,6 +118,8 @@ class OrderOut(BaseModel):
     total_amount: float
     payment_method: Optional[str] = None
     transaction_id: Optional[str] = None
+    cancel_reason: Optional[str] = None
+    rating: Optional[int] = None
     created_at: datetime
     items: List[OrderItemOut]
     
@@ -126,6 +131,10 @@ class AdminLogin(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleLoginRequest(BaseModel):
+    email: str
+    name: str
+
 # Analytics Schemas
 class AnalyticsOverview(BaseModel):
     today_orders: int
@@ -135,9 +144,40 @@ class AnalyticsOverview(BaseModel):
 
 # Forgot Password Schemas
 class ForgotPasswordRequest(BaseModel):
-    phone: str
+    email_or_phone: str
 
 class ResetPasswordConfirm(BaseModel):
-    phone: str
+    email_or_phone: str
     otp: str
     new_password: str
+
+# System Settings Schemas
+class SystemSettingBase(BaseModel):
+    key: str
+    value: str
+
+class SystemSettingUpdate(BaseModel):
+    value: str
+
+class SystemSettingOut(SystemSettingBase):
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+class OrderComplete(BaseModel):
+    rating: Optional[int] = None
+
+class SpecialtyToggle(BaseModel):
+    is_specialty: bool
+
+class AdminVerifyOTPRequest(BaseModel):
+    email: EmailStr
+    password: str
+    otp: str
+
+class SpecialtiesBulkUpdate(BaseModel):
+    item_ids: List[int]
+
+
+

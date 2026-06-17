@@ -73,6 +73,8 @@ async def update_order_status(
         raise HTTPException(status_code=404, detail="Order not found")
         
     order.order_status = status_update.status
+    if status_update.status == "Rejected":
+        order.cancel_reason = status_update.cancel_reason
     db.commit()
     db.refresh(order)
     
@@ -83,7 +85,8 @@ async def update_order_status(
             "event": "order_update",
             "data": {
                 "order_id": order.id,
-                "status": order.order_status
+                "status": order.order_status,
+                "cancel_reason": order.cancel_reason
             }
         },
         client_id=str(order.user_id)
@@ -94,7 +97,8 @@ async def update_order_status(
             "event": "admin_order_update",
             "data": {
                 "order_id": order.id,
-                "status": order.order_status
+                "status": order.order_status,
+                "cancel_reason": order.cancel_reason
             }
         },
         client_id="admin"
@@ -117,7 +121,8 @@ def create_menu_item(item_in: schemas.MenuItemCreate, db: Session = Depends(get_
         price=item_in.price,
         is_veg=item_in.is_veg,
         is_available=item_in.is_available,
-        availability_status=item_in.availability_status
+        availability_status=item_in.availability_status,
+        is_specialty=item_in.is_specialty
     )
     db.add(new_item)
     db.commit()
@@ -150,3 +155,51 @@ def delete_menu_item(item_id: int, db: Session = Depends(get_db)):
     db.delete(item)
     db.commit()
     return None
+
+@router.put("/settings/{key}", response_model=schemas.SystemSettingOut)
+def update_setting(
+    key: str,
+    setting_in: schemas.SystemSettingUpdate,
+    db: Session = Depends(get_db)
+):
+    setting = db.query(models.SystemSetting).filter(models.SystemSetting.key == key).first()
+    if not setting:
+        setting = models.SystemSetting(key=key, value=setting_in.value)
+        db.add(setting)
+    else:
+        setting.value = setting_in.value
+    db.commit()
+    db.refresh(setting)
+    return setting
+
+@router.put("/menu-items/{item_id}/specialty", response_model=schemas.MenuItemOut)
+def toggle_menu_item_specialty(
+    item_id: int,
+    specialty_toggle: schemas.SpecialtyToggle,
+    db: Session = Depends(get_db)
+):
+    item = db.query(models.MenuItem).filter(models.MenuItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+        
+    item.is_specialty = specialty_toggle.is_specialty
+    db.commit()
+    db.refresh(item)
+    return item
+
+@router.put("/menu-items/specialties/bulk")
+def update_specialties_bulk(
+    req: schemas.SpecialtiesBulkUpdate,
+    db: Session = Depends(get_db)
+):
+    # Reset all menu items specialties to False
+    db.query(models.MenuItem).update({models.MenuItem.is_specialty: False})
+    
+    # Set selected items to True
+    if req.item_ids:
+        db.query(models.MenuItem).filter(models.MenuItem.id.in_(req.item_ids)).update({models.MenuItem.is_specialty: True}, synchronize_session=False)
+        
+    db.commit()
+    return {"message": "Specialties updated successfully."}
+
+

@@ -12,16 +12,24 @@ export default function ClientProviders({ children }: { children: React.ReactNod
     // Initialize Cart state from local storage
     useCartStore.getState().initializeCart();
 
-    // Initialize Theme (dark mode by default or matching local storage selection)
+    // Initialize Theme (default as per user system if no local storage preference exists)
     const savedTheme = localStorage.getItem('theme');
     const hasThemeKey = savedTheme !== null;
     
-    // Default to dark mode if no key exists, otherwise follow saved value
-    if (savedTheme === 'dark' || (!hasThemeKey)) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+    if (hasThemeKey) {
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     } else {
-      document.documentElement.classList.remove('dark');
+      // Default to system preference
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (systemPrefersDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, []);
 

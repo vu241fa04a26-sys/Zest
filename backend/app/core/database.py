@@ -39,3 +39,16 @@ def ensure_sqlite_schema():
 
         if "transaction_id" not in existing_columns:
             connection.execute(text("ALTER TABLE orders ADD COLUMN transaction_id VARCHAR"))
+
+        if "cancel_reason" not in existing_columns:
+            connection.execute(text("ALTER TABLE orders ADD COLUMN cancel_reason VARCHAR"))
+
+        if "rating" not in existing_columns:
+            connection.execute(text("ALTER TABLE orders ADD COLUMN rating INTEGER"))
+
+        existing_menu_columns = {
+            row[1] for row in connection.execute(text("PRAGMA table_info(menu_items)")).fetchall()
+        }
+
+        if "is_specialty" not in existing_menu_columns:
+            connection.execute(text("ALTER TABLE menu_items ADD COLUMN is_specialty BOOLEAN DEFAULT 0"))

@@ -18,6 +18,7 @@ export default function CartDrawer() {
   const [error, setError] = useState<string | null>(null);
   const [paymentReference, setPaymentReference] = useState('');
   const [clientItems, setClientItems] = useState(items);
+  const [showQR, setShowQR] = useState(false);
 
   // Sync cart items on client load to prevent hydration error
   useEffect(() => {
@@ -156,12 +157,17 @@ export default function CartDrawer() {
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="text-sm font-bold text-white line-clamp-1">{item.name}</h4>
-                          <span
-                            className={`inline-block h-2.5 w-2.5 rounded-full mt-1 ${
-                              item.isVeg ? 'bg-green-500' : 'bg-red-500'
-                            }`}
-                            title={item.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
-                          />
+                          <div className="flex items-center space-x-1.5 mt-1">
+                            <span
+                              className={`inline-block h-2 w-2 rounded-full ${
+                                item.isVeg ? 'bg-green-500' : 'bg-red-500'
+                              }`}
+                              title={item.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+                            />
+                            <span className={`text-[10px] font-bold ${item.isVeg ? 'text-green-500' : 'text-red-500'}`}>
+                              {item.isVeg ? 'Veg' : 'Non-Veg'}
+                            </span>
+                          </div>
                         </div>
                         <span className="text-sm font-bold text-white">
                           ₹{item.price * item.quantity}
@@ -210,25 +216,64 @@ export default function CartDrawer() {
                   <span className="text-green-500 font-semibold">FREE</span>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                    UPI / Payment Reference
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Enter transaction ID"
-                    className="w-full bg-zinc-950 border border-card-border focus:border-brand-orange rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
-                  />
-                  <p className="text-[10px] text-zinc-500">
-                    Complete payment first, then enter the reference ID for canteen verification.
-                  </p>
-                </div>
+                {isAuthenticated && (
+                  <div className="space-y-4">
+                    {(() => {
+                      const total = getCartTotal();
+                      const upiUrl = `upi://pay?pa=zestcanteen@ybl&pn=Zest%20Canteen&am=${total}&cu=INR`;
+                      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`;
+                      return (
+                        <div className="flex flex-col bg-zinc-950 rounded-2xl border border-card-border overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setShowQR(!showQR)}
+                            className="flex items-center justify-between px-4 py-3 text-xs font-bold text-zinc-300 hover:bg-zinc-900 transition-colors w-full"
+                          >
+                            <span>⚡ Pay via UPI QR Code</span>
+                            <span className="text-[10px] text-brand-orange bg-brand-orange/10 px-2.5 py-0.5 rounded-lg">
+                              {showQR ? 'Hide QR Code' : 'Show QR Code'}
+                            </span>
+                          </button>
+                          {showQR && (
+                            <div className="flex flex-col items-center justify-center p-4 border-t border-card-border/50 bg-zinc-950/50 space-y-3 animate-fade-in">
+                              <img
+                                src={qrCodeUrl}
+                                alt="UPI QR Code"
+                                className="w-28 h-28 object-contain bg-white p-1.5 rounded-xl"
+                              />
+                              <a
+                                href={upiUrl}
+                                className="text-[11px] font-black text-brand-orange hover:underline flex items-center space-x-1"
+                              >
+                                <span>⚡ Click to Pay directly via UPI App</span>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                        UPI / Payment Reference
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentReference}
+                        onChange={(e) => setPaymentReference(e.target.value)}
+                        placeholder="Enter transaction ID"
+                        className="w-full bg-zinc-950 border border-card-border focus:border-brand-orange rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+                      />
+                      <p className="text-[10px] text-zinc-500">
+                        Complete payment first, then enter the reference ID for canteen verification.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 <button
                   onClick={handleCheckout}
-                  disabled={loading || !paymentReference.trim()}
+                  disabled={loading || (isAuthenticated && !paymentReference.trim())}
                   className="w-full py-3.5 bg-brand-orange text-white font-bold rounded-2xl flex items-center justify-center space-x-2 shadow-lg shadow-brand-orange/20 hover:bg-brand-orange-hover hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all"
                 >
                   {loading ? (
@@ -241,7 +286,9 @@ export default function CartDrawer() {
                   )}
                 </button>
                 <p className="text-[10px] text-center text-zinc-500">
-                  By clicking above, you agree to place this order in the canteen queue. Real-time updates will begin immediately.
+                  {isAuthenticated 
+                    ? "By clicking above, you agree to place this order in the canteen queue. Real-time updates will begin immediately."
+                    : "You will be prompted to sign in or create an account before completing your order."}
                 </p>
               </div>
             )}

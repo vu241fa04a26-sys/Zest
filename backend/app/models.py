@@ -37,6 +37,7 @@ class MenuItem(Base):
     is_veg = Column(Boolean, default=True)
     is_available = Column(Boolean, default=True)
     availability_status = Column(String, default="In Stock")  # "In Stock", "Out Of Stock", "Limited Stock"
+    is_specialty = Column(Boolean, default=False, nullable=False)
     
     category = relationship("Category", back_populates="items")
     order_items = relationship("OrderItem", back_populates="menu_item")
@@ -50,6 +51,8 @@ class Order(Base):
     total_amount = Column(Float, nullable=False)
     payment_method = Column(String, nullable=True)
     transaction_id = Column(String, nullable=True)
+    cancel_reason = Column(String, nullable=True)
+    rating = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     user = relationship("User", back_populates="orders")
@@ -73,3 +76,10 @@ class AdminUser(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True, nullable=False)
+    value = Column(String, nullable=False)
