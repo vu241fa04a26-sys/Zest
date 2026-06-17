@@ -56,6 +56,7 @@ def get_openapi_endpoint():
     return app.openapi()
 
 @app.get("/")
+@app.head("/")
 def read_root():
     return {"message": "Welcome to ZEST Premium Canteen Backend API"}
 
